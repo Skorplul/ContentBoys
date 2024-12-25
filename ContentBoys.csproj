@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
     <!-- BepInEx Properties -->
     <PropertyGroup>
         <AssemblyName>Skorp.ContentBoys</AssemblyName>
@@ -66,28 +66,28 @@
     <ItemGroup>
         <Reference Include="C:\\Users\\skorp\\AppData\\Roaming\\r2modmanPlus-local\\ContentWarning\\profiles\\dev\\BepInEx\\plugins\\MMHOOK\\Managed\\MMHOOK_Assembly-CSharp.dll" />
         <Reference Include="Photon3Unity3D">
-          <HintPath>..\..\..\SteamLibrary\steamapps\common\Content Warning\Content Warning_Data\Managed\Photon3Unity3D.dll</HintPath>
+          <HintPath>N:\SteamLibrary\steamapps\common\Content Warning\Content Warning_Data\Managed\Photon3Unity3D.dll</HintPath>
         </Reference>
         <Reference Include="PhotonChat">
-          <HintPath>..\..\..\SteamLibrary\steamapps\common\Content Warning\Content Warning_Data\Managed\PhotonChat.dll</HintPath>
+          <HintPath>N:\SteamLibrary\steamapps\common\Content Warning\Content Warning_Data\Managed\PhotonChat.dll</HintPath>
         </Reference>
         <Reference Include="PhotonRealtime">
-          <HintPath>..\..\..\SteamLibrary\steamapps\common\Content Warning\Content Warning_Data\Managed\PhotonRealtime.dll</HintPath>
+          <HintPath>N:\SteamLibrary\steamapps\common\Content Warning\Content Warning_Data\Managed\PhotonRealtime.dll</HintPath>
         </Reference>
         <Reference Include="PhotonUnityNetworking">
-          <HintPath>..\..\..\SteamLibrary\steamapps\common\Content Warning\Content Warning_Data\Managed\PhotonUnityNetworking.dll</HintPath>
+          <HintPath>N:\SteamLibrary\steamapps\common\Content Warning\Content Warning_Data\Managed\PhotonUnityNetworking.dll</HintPath>
         </Reference>
         <Reference Include="PhotonUnityNetworking.Utilities">
-          <HintPath>..\..\..\SteamLibrary\steamapps\common\Content Warning\Content Warning_Data\Managed\PhotonUnityNetworking.Utilities.dll</HintPath>
+          <HintPath>N:\SteamLibrary\steamapps\common\Content Warning\Content Warning_Data\Managed\PhotonUnityNetworking.Utilities.dll</HintPath>
         </Reference>
         <Reference Include="PhotonVoice">
-          <HintPath>..\..\..\SteamLibrary\steamapps\common\Content Warning\Content Warning_Data\Managed\PhotonVoice.dll</HintPath>
+          <HintPath>N:\SteamLibrary\steamapps\common\Content Warning\Content Warning_Data\Managed\PhotonVoice.dll</HintPath>
         </Reference>
         <Reference Include="PhotonVoice.API">
-          <HintPath>..\..\..\SteamLibrary\steamapps\common\Content Warning\Content Warning_Data\Managed\PhotonVoice.API.dll</HintPath>
+          <HintPath>N:\SteamLibrary\steamapps\common\Content Warning\Content Warning_Data\Managed\PhotonVoice.API.dll</HintPath>
         </Reference>
         <Reference Include="PhotonVoice.PUN">
-          <HintPath>..\..\..\SteamLibrary\steamapps\common\Content Warning\Content Warning_Data\Managed\PhotonVoice.PUN.dll</HintPath>
+          <HintPath>N:\SteamLibrary\steamapps\common\Content Warning\Content Warning_Data\Managed\PhotonVoice.PUN.dll</HintPath>
         </Reference>
     </ItemGroup>
 </Project>
