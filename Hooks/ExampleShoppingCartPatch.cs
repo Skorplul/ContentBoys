@@ -17,18 +17,13 @@ namespace ContentBoys.Patches
             On.ShoppingCart.AddItemToCart += ShoppingCart_AddItemToCart;
             On.ShopHandler.OnAddToCartItemClicked += ShopHandler_OnAddToCartClicked;
             On.PlayerController.Update += PlayerController_Update;
+            On.PlayerController.Movement += PlayerController_Movement;
         }
 
         private static void ShoppingCart_AddItemToCart(On.ShoppingCart.orig_AddItemToCart orig, ShoppingCart self, ShopItem item)
         {
             // Call the Trampoline for the Original method or another method in the Detour Chain if any exist
             orig(self, item);
-
-            /*
-             * Adding a random value to the visible price of the shopping cart typically is slightly
-             * complicated due to the private setter of the CartValue property. However, as we have publicized the
-             * game assembly, we do not have to worry about it, since it now is public.
-             */
             self.CartValue = 0;
         }
 
@@ -87,12 +82,13 @@ namespace ContentBoys.Patches
             {
                 if (Configs.infinitSprint)
                 {
-                    self.player.data.currentStamina = 100;
+                    self.player.data.currentStamina = 10f;
                 }
-                else
+                else if (!Configs.infinitSprint) 
                 {
                     self.player.data.currentStamina = Mathf.MoveTowards(self.player.data.currentStamina, 0f, Time.deltaTime);
                 }
+
                 if (self.player.data.currentStamina < 0.01f)
                 {
                     self.player.data.staminaDepleated = true;
@@ -119,6 +115,12 @@ namespace ContentBoys.Patches
                 }
             }
             self.SetRotations();
+        }
+
+        private static void PlayerController_Movement(On.PlayerController.orig_Movement orig, PlayerController self)
+        {
+            orig(self);
+
         }
     }
 }
