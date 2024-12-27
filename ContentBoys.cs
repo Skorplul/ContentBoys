@@ -2,9 +2,7 @@ using System.Reflection;
 using BepInEx;
 using BepInEx.Logging;
 using ContentBoys.Patches;
-using ContentSettings.API;
 using MonoMod.RuntimeDetour.HookGen;
-using ContentBoys.Settings;
 
 namespace ContentBoys
 {

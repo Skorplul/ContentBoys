@@ -6,6 +6,12 @@ namespace ContentBoys.Patches
 {
     public class ExampleShoppingCartPatch
     {
+        private static bool isFreeCamActive = false; // Tracks if free camera is active
+        private static Vector3 freeCamPosition;     // Stores free camera position
+        private static Quaternion freeCamRotation; // Stores free camera rotation
+        private static float freeCamSpeed = 10f;    // Speed of free camera movement
+        private static float freeCamLookSpeed = 2f; // Speed of camera rotation
+        private static Transform? originalParent; // Stores the camera's original parent
         internal static void Init()
         {
             /*
@@ -17,7 +23,7 @@ namespace ContentBoys.Patches
             On.ShoppingCart.AddItemToCart += ShoppingCart_AddItemToCart;
             On.ShopHandler.OnAddToCartItemClicked += ShopHandler_OnAddToCartClicked;
             On.PlayerController.Update += PlayerController_Update;
-            On.PlayerController.Movement += PlayerController_Movement;
+            On.PlayerController.FixedUpdate += PlayerController_FixedUpdate;
         }
 
         private static void ShoppingCart_AddItemToCart(On.ShoppingCart.orig_AddItemToCart orig, ShoppingCart self, ShopItem item)
@@ -117,10 +123,94 @@ namespace ContentBoys.Patches
             self.SetRotations();
         }
 
-        private static void PlayerController_Movement(On.PlayerController.orig_Movement orig, PlayerController self)
+        private static void PlayerController_FixedUpdate(On.PlayerController.orig_FixedUpdate orig, PlayerController self)
         {
-            orig(self);
+            // Free camera mode toggle (e.g., by pressing "F")
+            if (Input.GetKeyDown(Configs.freeCamButton))
+            {
+                isFreeCamActive = !isFreeCamActive;
 
+                if (isFreeCamActive)
+                {
+                    // Enter free camera mode
+                    originalParent = Camera.main.transform.parent;
+                    Camera.main.transform.parent = null; // Remove from hierarchy
+                    freeCamPosition = Camera.main.transform.position;
+                    freeCamRotation = Camera.main.transform.rotation;
+                }
+                else
+                {
+                    // Exit free camera mode, restore player position/rotation
+                    Camera.main.transform.parent = originalParent;
+                    Camera.main.transform.localPosition = Vector3.zero; // Reset position relative to parent
+                    Camera.main.transform.localRotation = Quaternion.identity; // Reset rotation relative to parent
+                }
+            }
+
+            // Handle free camera movement
+            if (isFreeCamActive)
+            {
+                // Free camera position movement
+                float moveX = 0f;
+                if (Input.GetKey(KeyCode.A)) moveX += freeCamSpeed * Time.deltaTime; // A
+                if (Input.GetKey(KeyCode.D)) moveX -= freeCamSpeed * Time.deltaTime; // D
+                float moveZ = 0f;
+                if (Input.GetKey(KeyCode.W)) moveZ += freeCamSpeed * Time.deltaTime; // W
+                if (Input.GetKey(KeyCode.S)) moveZ -= freeCamSpeed * Time.deltaTime; // S
+                float moveY = 0f;
+
+                if (Input.GetKey(KeyCode.E)) moveY += freeCamSpeed * Time.deltaTime; // Ascend (E)
+                if (Input.GetKey(KeyCode.Q)) moveY -= freeCamSpeed * Time.deltaTime; // Descend (Q)
+
+                freeCamPosition += Camera.main.transform.forward * moveZ +
+                                   Camera.main.transform.right * moveX +
+                                   Camera.main.transform.up * moveY;
+
+                // Free camera rotation (mouse look)
+                float lookX = Input.GetAxis("Mouse X") * freeCamLookSpeed;
+                float lookY = -Input.GetAxis("Mouse Y") * freeCamLookSpeed;
+
+                freeCamRotation *= Quaternion.Euler(lookY, lookX, 0f);
+
+                // Apply position and rotation to the camera
+                Camera.main.transform.position = freeCamPosition;
+                Camera.main.transform.rotation = freeCamRotation;
+            }
+
+            // Original Logic
+            if (self.player.Ragdoll())
+            {
+                return;
+            }
+            if (!self.player.data.physicsAreReady)
+            {
+                return;
+            }
+            if (self.player.data.simplifiedRagdoll && self.player.refs.view.IsMine)
+            {
+                self.SimpleMovement();
+                return;
+            }
+            if (!self.player.data.carried)
+            {
+                self.ConstantGravity();
+                if (!self.player.data.isGrounded)
+                {
+                    self.Gravity();
+                }
+                else
+                {
+                    self.Standing();
+                }
+            }
+            if (isFreeCamActive)
+                return;
+            self.Movement();
+            self.BodyRotation();
+            if (self.jumpForceTime > 0f)
+            {
+                self.ApplyJumpForce();
+            }
         }
     }
 }

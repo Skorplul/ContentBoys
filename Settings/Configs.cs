@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using UnityEngine;
 
 namespace ContentBoys
 {
@@ -9,5 +7,10 @@ namespace ContentBoys
         public static bool infinitSprint {  get; set; } = false;
 
         public static bool shopIsFree { get; set; } = false;
+
+        // for testing wiht a button (doesn't work yet)
+        public static KeyCode freeCamButton { get; set; } = KeyCode.F;
+
+        public static bool freeCam {  get; set; } = false;
     }
 }
