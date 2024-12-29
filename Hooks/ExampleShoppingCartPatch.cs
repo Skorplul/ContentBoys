@@ -1,5 +1,4 @@
 using System;
-using ExitGames.Client.Photon.StructWrapping;
 using Photon.Pun;
 using UnityEngine;
 
@@ -11,12 +10,12 @@ namespace ContentBoys.Patches
         /// <summary>
         /// Normal speed of camera movement.
         /// </summary>
-        public static float normMovementSpeed = 10f;
+        public static float normMovementSpeed = 1f;
 
         /// <summary>
         /// Speed of camera movement when shift is held down,
         /// </summary>
-        public static float fastMovementSpeed = 100f;
+        public static float fastMovementSpeed = 10f;
 
         /// <summary>
         /// Sensitivity for free look.
@@ -32,6 +31,8 @@ namespace ContentBoys.Patches
         /// Amount to zoom the camera when using the mouse wheel (fast mode).
         /// </summary>
         public static float fastZoomSensitivity = 50f;
+
+        private static Transform? originalParent = null; // Stores the camera's original parent
 
         public static bool freeChanged = false;
 
@@ -154,13 +155,43 @@ namespace ContentBoys.Patches
             {
                 isFreeCamActive = !isFreeCamActive;
 
-                //if (isFreeCamActive && !freeChanged)
+                if (isFreeCamActive)
+                {
+                    // Detach the camera
+                    originalParent = Camera.main.transform.parent;
+                    Camera.main.transform.parent = null; // Remove from hierarchy
+                    self.StopCoroutine(self.player.toggleCollisionCor);
+                }
+                else
+                {
+                    // Reattach the camera
+                    Camera.main.transform.parent = originalParent;
+                    Camera.main.transform.localPosition = Vector3.zero; // Reset position relative to parent
+                    Camera.main.transform.localRotation = Quaternion.identity; // Reset rotation relative to parent
+                    if (self.player.toggleCollisionCor != null)
+                    {
+                        Debug.Log("Cancelling current corutine and resetting colliders!");
+                        self.StopCoroutine(self.player.toggleCollisionCor);
+                        for (int i = 0; i < self.player.collidersToToggleList.Count; i++)
+                        {
+                            if (!(self.player.collidersToToggleList[i] == null))
+                            {
+                                self.player.collidersToToggleList[i].enabled = self.player.collidersEnabled[i];
+                            }
+                        }
+                        self.player.collidersEnabled.Clear();
+                        self.player.collidersToToggleList.Clear();
+                        self.player.toggleCollisionCor = null;
+                    }
+                }
+
+                //if (!isFreeCamActive && !freeChanged)
                 //{
                 //    isFreeCamActive = false;
                 //    freeChanged = true;
 
                 //}
-                //else if (!isFreeCamActive && !freeChanged)
+                //else if (isFreeCamActive && !freeChanged)
                 //{
                 //    isFreeCamActive = true;
                 //    freeChanged = true;
@@ -180,51 +211,38 @@ namespace ContentBoys.Patches
             // Handle free camera movement
             if (isFreeCamActive)
             {
-                self.ragdoll.AddForce(-self.player.data.gravityDirection * self.constantGravity, ForceMode.Acceleration);
-
                 var fastMode = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
                 var movementSpeed = fastMode ? fastMovementSpeed : normMovementSpeed;
 
-                if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow))
+                if (Input.GetKey(KeyCode.Space) || Input.GetKey(KeyCode.PageUp))
                 {
-                    self.transform.position = self.transform.position + (-self.transform.right * movementSpeed * Time.deltaTime);
+                    self.transform.position = self.transform.position + (Vector3.up * (movementSpeed * 5) * Time.deltaTime);
                 }
 
-                if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow))
+                if (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.PageDown))
                 {
-                    self.transform.position = self.transform.position + (self.transform.right * movementSpeed * Time.deltaTime);
+                    self.transform.position = self.transform.position + (-Vector3.up * (movementSpeed * 5) * Time.deltaTime);
                 }
 
-                if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow))
+                Vector3 lookDirection = self.player.data.lookDirection;
+                Vector3 lookDirectionRight = self.player.data.lookDirectionRight;
+                lookDirection.y = 0f;
+                lookDirection.Normalize();
+                Vector3 planeNormal = self.player.data.groundNormal;
+                if (self.player.data.sinceGrounded > 0.2f)
                 {
-                    self.transform.position = self.transform.position + (self.transform.forward * movementSpeed * Time.deltaTime);
+                    planeNormal = -self.player.data.gravityDirection;
                 }
-
-                if (Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow))
+                Vector3 a = HelperFunctions.GroundDirection(planeNormal, -lookDirectionRight);
+                Vector3 a2 = HelperFunctions.GroundDirection(planeNormal, lookDirection);
+                Vector3 vector = a * self.player.input.movementInput.y + a2 * self.player.input.movementInput.x;
+                vector = Vector3.ClampMagnitude(vector, 1f);
+                if (self.wallClimb)
                 {
-                    self.transform.position = self.transform.position + (-self.transform.forward * movementSpeed * Time.deltaTime);
+                    vector = self.player.data.lookDirection;
                 }
-
-                if (Input.GetKey(KeyCode.Q))
-                {
-                    self.transform.position = self.transform.position + (self.transform.up * movementSpeed * Time.deltaTime);
-                }
-
-                if (Input.GetKey(KeyCode.E))
-                {
-                    self.transform.position = self.transform.position + (-self.transform.up * movementSpeed * Time.deltaTime);
-                }
-
-                if (Input.GetKey(KeyCode.R) || Input.GetKey(KeyCode.PageUp))
-                {
-                    self.transform.position = self.transform.position + (Vector3.up * movementSpeed * Time.deltaTime);
-                }
-
-                if (Input.GetKey(KeyCode.F) || Input.GetKey(KeyCode.PageDown))
-                {
-                    self.transform.position = self.transform.position + (-Vector3.up * movementSpeed * Time.deltaTime);
-                }
-
+                self.player.data.movementVector = vector;
+                self.ragdoll.AddForce(self.player.data.movementVector * movementSpeed * self.movementForce, ForceMode.Impulse);
             }
             else
             {
