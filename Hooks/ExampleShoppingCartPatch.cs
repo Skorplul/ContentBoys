@@ -1,4 +1,5 @@
 using System;
+using ExitGames.Client.Photon.StructWrapping;
 using Photon.Pun;
 using UnityEngine;
 
@@ -7,11 +8,35 @@ namespace ContentBoys.Patches
     public class ExampleShoppingCartPatch
     {
         private static bool isFreeCamActive = false; // Tracks if free camera is active
-        private static Vector3 freeCamPosition;     // Stores free camera position
-        private static Quaternion freeCamRotation; // Stores free camera rotation
-        private static float freeCamSpeed = 10f;    // Speed of free camera movement
-        private static float freeCamLookSpeed = 2f; // Speed of camera rotation
-        private static Transform? originalParent; // Stores the camera's original parent
+        /// <summary>
+        /// Normal speed of camera movement.
+        /// </summary>
+        public static float normMovementSpeed = 10f;
+
+        /// <summary>
+        /// Speed of camera movement when shift is held down,
+        /// </summary>
+        public static float fastMovementSpeed = 100f;
+
+        /// <summary>
+        /// Sensitivity for free look.
+        /// </summary>
+        public static float freeLookSensitivity = 3f;
+
+        /// <summary>
+        /// Amount to zoom the camera when using the mouse wheel.
+        /// </summary>
+        public static float zoomSensitivity = 10f;
+
+        /// <summary>
+        /// Amount to zoom the camera when using the mouse wheel (fast mode).
+        /// </summary>
+        public static float fastZoomSensitivity = 50f;
+
+        public static bool freeChanged = false;
+
+        public static int changeCnt = 0;
+
         internal static void Init()
         {
             /*
@@ -125,91 +150,85 @@ namespace ContentBoys.Patches
 
         private static void PlayerController_FixedUpdate(On.PlayerController.orig_FixedUpdate orig, PlayerController self)
         {
-            // Free camera mode toggle (e.g., by pressing "F")
             if (Input.GetKeyDown(Configs.freeCamButton))
             {
                 isFreeCamActive = !isFreeCamActive;
 
-                if (isFreeCamActive)
-                {
-                    // Enter free camera mode
-                    originalParent = Camera.main.transform.parent;
-                    Camera.main.transform.parent = null; // Remove from hierarchy
-                    freeCamPosition = Camera.main.transform.position;
-                    freeCamRotation = Camera.main.transform.rotation;
-                }
-                else
-                {
-                    // Exit free camera mode, restore player position/rotation
-                    Camera.main.transform.parent = originalParent;
-                    Camera.main.transform.localPosition = Vector3.zero; // Reset position relative to parent
-                    Camera.main.transform.localRotation = Quaternion.identity; // Reset rotation relative to parent
-                }
+                //if (isFreeCamActive && !freeChanged)
+                //{
+                //    isFreeCamActive = false;
+                //    freeChanged = true;
+
+                //}
+                //else if (!isFreeCamActive && !freeChanged)
+                //{
+                //    isFreeCamActive = true;
+                //    freeChanged = true;
+                //}
             }
+            
+            //if (freeChanged && changeCnt <= 300)
+            //{
+            //    changeCnt++;
+            //}
+            //else if (freeChanged && changeCnt >= 300)
+            //{
+            //    changeCnt = 0;
+            //    freeChanged = false;
+            //}
 
             // Handle free camera movement
             if (isFreeCamActive)
             {
-                // Free camera position movement
-                float moveX = 0f;
-                if (Input.GetKey(KeyCode.A)) moveX += freeCamSpeed * Time.deltaTime; // A
-                if (Input.GetKey(KeyCode.D)) moveX -= freeCamSpeed * Time.deltaTime; // D
-                float moveZ = 0f;
-                if (Input.GetKey(KeyCode.W)) moveZ += freeCamSpeed * Time.deltaTime; // W
-                if (Input.GetKey(KeyCode.S)) moveZ -= freeCamSpeed * Time.deltaTime; // S
-                float moveY = 0f;
+                self.ragdoll.AddForce(-self.player.data.gravityDirection * self.constantGravity, ForceMode.Acceleration);
 
-                if (Input.GetKey(KeyCode.E)) moveY += freeCamSpeed * Time.deltaTime; // Ascend (E)
-                if (Input.GetKey(KeyCode.Q)) moveY -= freeCamSpeed * Time.deltaTime; // Descend (Q)
+                var fastMode = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
+                var movementSpeed = fastMode ? fastMovementSpeed : normMovementSpeed;
 
-                freeCamPosition += Camera.main.transform.forward * moveZ +
-                                   Camera.main.transform.right * moveX +
-                                   Camera.main.transform.up * moveY;
-
-                // Free camera rotation (mouse look)
-                float lookX = Input.GetAxis("Mouse X") * freeCamLookSpeed;
-                float lookY = -Input.GetAxis("Mouse Y") * freeCamLookSpeed;
-
-                freeCamRotation *= Quaternion.Euler(lookY, lookX, 0f);
-
-                // Apply position and rotation to the camera
-                Camera.main.transform.position = freeCamPosition;
-                Camera.main.transform.rotation = freeCamRotation;
-            }
-
-            // Original Logic
-            if (self.player.Ragdoll())
-            {
-                return;
-            }
-            if (!self.player.data.physicsAreReady)
-            {
-                return;
-            }
-            if (self.player.data.simplifiedRagdoll && self.player.refs.view.IsMine)
-            {
-                self.SimpleMovement();
-                return;
-            }
-            if (!self.player.data.carried)
-            {
-                self.ConstantGravity();
-                if (!self.player.data.isGrounded)
+                if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow))
                 {
-                    self.Gravity();
+                    self.transform.position = self.transform.position + (-self.transform.right * movementSpeed * Time.deltaTime);
                 }
-                else
+
+                if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow))
                 {
-                    self.Standing();
+                    self.transform.position = self.transform.position + (self.transform.right * movementSpeed * Time.deltaTime);
                 }
+
+                if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow))
+                {
+                    self.transform.position = self.transform.position + (self.transform.forward * movementSpeed * Time.deltaTime);
+                }
+
+                if (Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow))
+                {
+                    self.transform.position = self.transform.position + (-self.transform.forward * movementSpeed * Time.deltaTime);
+                }
+
+                if (Input.GetKey(KeyCode.Q))
+                {
+                    self.transform.position = self.transform.position + (self.transform.up * movementSpeed * Time.deltaTime);
+                }
+
+                if (Input.GetKey(KeyCode.E))
+                {
+                    self.transform.position = self.transform.position + (-self.transform.up * movementSpeed * Time.deltaTime);
+                }
+
+                if (Input.GetKey(KeyCode.R) || Input.GetKey(KeyCode.PageUp))
+                {
+                    self.transform.position = self.transform.position + (Vector3.up * movementSpeed * Time.deltaTime);
+                }
+
+                if (Input.GetKey(KeyCode.F) || Input.GetKey(KeyCode.PageDown))
+                {
+                    self.transform.position = self.transform.position + (-Vector3.up * movementSpeed * Time.deltaTime);
+                }
+
             }
-            if (isFreeCamActive)
-                return;
-            self.Movement();
-            self.BodyRotation();
-            if (self.jumpForceTime > 0f)
+            else
             {
-                self.ApplyJumpForce();
+                orig(self);
             }
         }
     }
