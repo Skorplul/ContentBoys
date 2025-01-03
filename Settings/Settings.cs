@@ -40,7 +40,7 @@ namespace ContentBoys.Settings
     {
         public override void ApplyValue()
         {
-            Configs.infinitSprint = Value;
+            Configs.freeCam = Value;
         }
 
         protected override bool GetDefaultValue()

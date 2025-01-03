@@ -6,7 +6,6 @@ namespace ContentBoys.Patches
 {
     public class ExampleShoppingCartPatch
     {
-        private static bool isFreeCamActive = false; // Tracks if free camera is active
         /// <summary>
         /// Normal speed of camera movement.
         /// </summary>
@@ -151,65 +150,44 @@ namespace ContentBoys.Patches
 
         private static void PlayerController_FixedUpdate(On.PlayerController.orig_FixedUpdate orig, PlayerController self)
         {
-            if (Input.GetKeyDown(Configs.freeCamButton))
+            if (Configs.freeCam)
             {
-                isFreeCamActive = !isFreeCamActive;
+                // not working, don't use
+                // it's supposed to decouple the cam but wellp it doesn't
 
-                if (isFreeCamActive)
-                {
-                    // Detach the camera
-                    originalParent = Camera.main.transform.parent;
-                    Camera.main.transform.parent = null; // Remove from hierarchy
-                    self.StopCoroutine(self.player.toggleCollisionCor);
-                }
-                else
-                {
-                    // Reattach the camera
-                    Camera.main.transform.parent = originalParent;
-                    Camera.main.transform.localPosition = Vector3.zero; // Reset position relative to parent
-                    Camera.main.transform.localRotation = Quaternion.identity; // Reset rotation relative to parent
-                    if (self.player.toggleCollisionCor != null)
-                    {
-                        Debug.Log("Cancelling current corutine and resetting colliders!");
-                        self.StopCoroutine(self.player.toggleCollisionCor);
-                        for (int i = 0; i < self.player.collidersToToggleList.Count; i++)
-                        {
-                            if (!(self.player.collidersToToggleList[i] == null))
-                            {
-                                self.player.collidersToToggleList[i].enabled = self.player.collidersEnabled[i];
-                            }
-                        }
-                        self.player.collidersEnabled.Clear();
-                        self.player.collidersToToggleList.Clear();
-                        self.player.toggleCollisionCor = null;
-                    }
-                }
-
-                //if (!isFreeCamActive && !freeChanged)
+                //if (Configs.freeCam)
                 //{
-                //    isFreeCamActive = false;
-                //    freeChanged = true;
-
+                //    // Detach the camera
+                //    originalParent = Camera.main.transform.parent;
+                //    Camera.main.transform.parent = null; // Remove from hierarchy
+                //    self.StopCoroutine(self.player.toggleCollisionCor);
                 //}
-                //else if (isFreeCamActive && !freeChanged)
+                //else
                 //{
-                //    isFreeCamActive = true;
-                //    freeChanged = true;
-                //}
+                //    // Reattach the camera
+                //    Camera.main.transform.parent = originalParent;
+                //    Camera.main.transform.localPosition = Vector3.zero; // Reset position relative to parent
+                //    Camera.main.transform.localRotation = Quaternion.identity; // Reset rotation relative to parent
+                //    if (self.player.toggleCollisionCor != null)
+                //    {
+                //        Debug.Log("Cancelling current corutine and resetting colliders!");
+                //        self.StopCoroutine(self.player.toggleCollisionCor);
+                //        for (int i = 0; i < self.player.collidersToToggleList.Count; i++)
+                //        {
+                //            if (!(self.player.collidersToToggleList[i] == null))
+                //            {
+                //                self.player.collidersToToggleList[i].enabled = self.player.collidersEnabled[i];
+                //            }
+                //        }
+                //        self.player.collidersEnabled.Clear();
+                //        self.player.collidersToToggleList.Clear();
+                //        self.player.toggleCollisionCor = null;
+                //    }
+                }
             }
-            
-            //if (freeChanged && changeCnt <= 300)
-            //{
-            //    changeCnt++;
-            //}
-            //else if (freeChanged && changeCnt >= 300)
-            //{
-            //    changeCnt = 0;
-            //    freeChanged = false;
-            //}
 
             // Handle free camera movement
-            if (isFreeCamActive)
+            if (Configs.freeCam)
             {
                 var fastMode = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
                 var movementSpeed = fastMode ? fastMovementSpeed : normMovementSpeed;
